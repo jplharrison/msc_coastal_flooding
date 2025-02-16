@@ -3,7 +3,7 @@ rm(list=ls())
 # Data Directory
 setwd("C:/Users/Jono/Dropbox/BackUp/E/Masters Advanced Analytics/Dissertation/msc_coastal_flooding/Data/data_extract")
 #setwd("C:/Users/User/Dropbox/BackUp/E/Masters Advanced Analytics/Dissertation/msc_coastal_flooding/Data/data_extract")
-#save.image(file='MLR_forecasting.RData')
+#save.image(file='MLR_scale_forecasting.RData')
 #load(file='MLR_forecasting.RData')
 
 #Libraries
@@ -26,7 +26,7 @@ y_pet <- read.csv(file='petaluma_wl_1hr.csv', header=T)
 y_row <- read.csv(file='rowland_wl_1hr.csv', header=T)
 
 # Rescale predictors between 0 and 1
-#for(i in 2:5){X[,i] <- rescale(X[,i], to=c(0,1))}
+for(i in 2:5){X[,i] <- rescale(X[,i], to=c(0,1))}
 # Format datetime
 X$datetime <- as.POSIXct(X$datetime, tz="GMT")
 y_nov$datetime <- as.POSIXct(y_nov$datetime, tz="GMT")
@@ -75,7 +75,7 @@ var_names <- c('Atmospheric Pressure', 'Local Wind', 'Napa Flow', 'Ocean Wind', 
 
 # OLS Multiple Linear Regression model
 linReg <- lm(resNov~atmPres+gnossWind+napaFlow+oceanWind, data = dat_train)
-resLinReg <- ts(data=resid(linReg) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resLinReg <- ts(data=resid(linReg), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 #stepAIC(linReg)
 
 # Multiple Quadratic Regression
@@ -85,7 +85,7 @@ quadReg <- lm(resNov~atmPres+gnossWind+napaFlow+oceanWind+
                 I(gnossWind*napaFlow)+I(gnossWind*oceanWind)+
                 I(napaFlow*oceanWind)
               , data = dat_train)
-resQuadReg <- ts(data=resid(quadReg) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resQuadReg <- ts(data=resid(quadReg), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 #stepAIC(quadReg)
 
 # Multiple Quadratic Regression
@@ -109,12 +109,12 @@ cubReg <- lm(formula = resNov ~ atmPres+gnossWind+napaFlow+oceanWind+
      I(atmPres^2*napaFlow)+I(atmPres^2*oceanWind)+I(gnossWind^2*atmPres)+I(gnossWind^2*napaFlow)+I(gnossWind^2*oceanWind)+
      I(napaFlow^2*atmPres)+I(napaFlow^2*gnossWind)+I(oceanWind^2*atmPres)+I(oceanWind^2*gnossWind)+I(oceanWind^2*napaFlow)+
      I(atmPres*gnossWind*napaFlow)+I(gnossWind*napaFlow*oceanWind), data = dat_train)
-resCubReg <- ts(data=resid(cubReg) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resCubReg <- ts(data=resid(cubReg), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 
 # OLS Multiple Linear Regression model with Seasonality
 linRegSeas <- lm(resNov~sin_28+cos_28+sin_yr+cos_yr+atmPres+gnossWind+napaFlow+oceanWind, data = dat_train)
 #stepAIC(linRegSeas)
-resLinRegSeas <- ts(data=resid(linRegSeas) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resLinRegSeas <- ts(data=resid(linRegSeas), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 
 
 # Cubic Regression with Seasonality 
@@ -146,7 +146,7 @@ cubRegSeas <- lm(resNov ~ sin_28+cos_28+sin_yr+cos_yr+
                    I(atmPres*gnossWind*napaFlow)+I(atmPres*gnossWind*oceanWind)+
                                                  I(gnossWind*napaFlow*oceanWind)
                  , data = dat_train)
-resCubRegSeas <- ts(data=resid(cubRegSeas) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resCubRegSeas <- ts(data=resid(cubRegSeas), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 
 dfs=20
 splineAICs <- matrix(ncol=4, nrow=dfs)
@@ -167,17 +167,17 @@ for(i in 1:4){print(paste0(colnames(dat_train)[i+4], ' DF=',min(which(splineAICs
 ## These are the smallest DFs that capture >90% / >80% of the improvement in AIC of a 20DF spline
 
 m_spline <- lm(resNov~ns(atmPres, df = 2)+ns(gnossWind, df = 3)+ns(napaFlow, df = 6)+ns(oceanWind, df = 2), data=dat_train)
-resSpline <- ts(data=resid(m_spline) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resSpline <- ts(data=resid(m_spline), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 
 m_splineSeas <- lm(resNov~sin_28+cos_28+sin_yr+cos_yr+ns(atmPres, df = 2)+ns(gnossWind, df = 3)+ns(napaFlow, df = 6)+ns(oceanWind, df = 2), data=dat_train)
-resSplineSeas <- ts(data=resid(m_splineSeas) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resSplineSeas <- ts(data=resid(m_splineSeas), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 
 
 m_spline2 <- lm(resNov~ns(atmPres, df = 3)+ns(gnossWind, df = 3)+ns(napaFlow, df = 11)+ns(oceanWind, df = 3), data=dat_train)
-resSpline2 <- ts(data=resid(m_spline2) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resSpline2 <- ts(data=resid(m_spline2), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 
 m_spline2Seas <- lm(resNov~sin_28+cos_28+sin_yr+cos_yr+ns(atmPres, df = 3)+ns(gnossWind, df = 3)+ns(napaFlow, df = 11)+ns(oceanWind, df = 3), data=dat_train)
-resSpline2Seas <- ts(data=resid(m_spline2Seas) , start=c(2019, 20), end=c(2022,4077), frequency=365.24219*24, class="matrix")
+resSpline2Seas <- ts(data=resid(m_spline2Seas), start=c(2019, 20), end=c(2022,6477.562-N_test), frequency=365.24219*24, class="matrix")
 
 
 # Plots of Fitted values for 'Linear', 'Quadratic','Cubic','Linear+Seasonal','Cubic+Seasonal' models
